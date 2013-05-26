@@ -33,17 +33,20 @@
 		//minimax function
 		// returns - 2 for impossible move; -1 for losing; 0 for tie; 1 for win
 		//passes a square, the number of moves, and a copy of the board.
-		this.valueOfChoice = function(square, moveCount, opponent) {
+		this.valueOfChoice = function(square, moveCount, opponent,currentBoard) {
 			//impossible moves
-			if(moveCount >= 9 || square.value !== null) {
+			if(moveCount >= 9) {
+				return 0;
+			}
+			if(square.value !== null) {
 				return -2;
 			}
 			
 			//make copy of board
-			var boardCopy = new Board(this.board.boardSize);
+			var boardCopy = new Board(currentBoard.boardSize);
 			for(var x = 0; x < 3; x++) {
 				for(var y = 0; y < 3; y++) {
-					boardCopy.boardArray[x][y].value = this.board.boardArray[x][y].value;
+					boardCopy.boardArray[x][y].value = currentBoard.boardArray[x][y].value;
 				}
 			}
 			
@@ -59,11 +62,11 @@
 				return 1;
 			}
 			else {
-				var worstCase = 0;
+				var worstCase = 1;
 				for(var x = 0; x < 3; x++) {
 					for(var y = 0; y < 3; y++) {
 						//alert("hi");
-						var opponentValue = (-1) * opponent.valueOfChoice(boardCopy.boardArray[x][y],moveCount,this);
+						var opponentValue = (-1)*opponent.valueOfChoice(boardCopy.boardArray[x][y],moveCount,this,boardCopy);
 						if(opponentValue < worstCase) {
 							worstCase = opponentValue;
 						}
@@ -88,12 +91,12 @@
 			}
 			return 1;
 		}
-		var squareChoice = null, bestScore = -2;
+		var squareChoice = null, worstScore = -2;
 		for(var x = 0; x < 3; x++) {
 			for(var y = 0; y < 3; y++) {
-				var squareScore = this.valueOfChoice(this.board.boardArray[x][y], moveCount, opponent);
-				if(squareScore > bestScore) {
-					bestScore = squareScore;
+				var squareScore = this.valueOfChoice(this.board.boardArray[x][y], moveCount, opponent,this.board);
+				if(squareScore > worstScore) {
+					worstScore = squareScore;
 					squareChoice = this.board.boardArray[x][y];
 				}
 			}
@@ -252,6 +255,15 @@
 				var chosenSquare = gameBoard.boardArray[Math.floor(rowVal)][Math.floor(colVal)];
 				validMove = currentPlayer.markSquare(chosenSquare);
 			} else {
+				/*
+				if(gameBoard.numMoves > 1) {
+					alert(p2.valueOfChoice(gameBoard.boardArray[2][1],gameBoard.numMoves,p1));
+				}
+				
+				
+				alert(p2.valueOfChoice(gameBoard.boardArray[0][0],gameBoard.numMoves,p1,gameBoard));
+				alert(p2.valueOfChoice(gameBoard.boardArray[0][2],gameBoard.numMoves,p1,gameBoard));
+				*/
 				validMove = p2.move(gameBoard.numMoves,p1);
 			}
 			
