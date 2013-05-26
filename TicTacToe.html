@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+	<title>Tic Tac Toe!</title>
+	
+	<script>
+	
+	//constructor for a Square in the board
+	function Square(x,y) {
+		this.xIndex = null;
+		this.yIndex = null;
+		this.x = x;
+		this.y = y;
+		
+		this.value = null;
+	}
+	
+	//constructor for a Player
+	function Player(sign, board) {
+		this.sign = sign;
+		this.board = board;
+		
+		this.markSquare = function(chosenSquare) {
+			if(chosenSquare.value === null) {
+				chosenSquare.value = this.sign;
+				return 1;
+			} else {
+				return -1;
+			}
+		}
+		
+		//minimax function
+		// returns - 2 for impossible move; -1 for losing; 0 for tie; 1 for win
+		//passes a square, the number of moves, and a copy of the board.
+		this.valueOfChoice = function(square, moveCount, opponent) {
+			//impossible moves
+			if(moveCount >= 9 || square.value !== null) {
+				return -2;
+			}
+			
+			//make copy of board
+			var boardCopy = new Board(this.board.boardSize);
+			for(var x = 0; x < 3; x++) {
+				for(var y = 0; y < 3; y++) {
+					boardCopy.boardArray[x][y].value = this.board.boardArray[x][y].value;
+				}
+			}
+			
+			//mark the copy of the square
+			this.markSquare(boardCopy.boardArray[square.xIndex][square.yIndex]);
+			moveCount++;
+			
+			//alert(boardCopy.boardArray[square.xIndex][square.yIndex].value);
+
+			
+			//check if it's a winning move
+			if(boardCopy.checkWinner(this.sign) === true) {
+				return 1;
+			}
+			else {
+				var worstCase = 0;
+				for(var x = 0; x < 3; x++) {
+					for(var y = 0; y < 3; y++) {
+						//alert("hi");
+						var opponentValue = (-1) * opponent.valueOfChoice(boardCopy.boardArray[x][y],moveCount,this);
+						if(opponentValue < worstCase) {
+							worstCase = opponentValue;
+						}
+					}
+				}
+				return worstCase;
+			}
+		}
+		
+	}
+	
+	//logic for AI to make move
+	// marks the best square
+	//returns 1 for success, 0 for failure
+	function aiChoice(moveCount,opponent) {
+		//time saver for the first 2 moves
+		if(moveCount <= 1) {
+			if(this.board.boardArray[1][1].value === null) {
+				this.markSquare(this.board.boardArray[1][1]);
+			} else {
+				this.markSquare(this.board.boardArray[0][0]);
+			}
+			return 1;
+		}
+		var squareChoice = null, bestScore = -2;
+		for(var x = 0; x < 3; x++) {
+			for(var y = 0; y < 3; y++) {
+				var squareScore = this.valueOfChoice(this.board.boardArray[x][y], moveCount, opponent);
+				if(squareScore > bestScore) {
+					bestScore = squareScore;
+					squareChoice = this.board.boardArray[x][y];
+				}
+			}
+		}
+		if(squareChoice !== null) {
+			this.markSquare(squareChoice);
+			return 1;
+		} else {
+			return -1;
+		}
+	}
+		//choose in order
+		/*
+		for(var x = 0; x < 3; x++) {
+			for(var y = 0; y < 3; y++) {
+				var success = this.markSquare(board.boardArray[x][y]);
+				if(success === 1) {
+					return 1;
+				}
+			}
+		}
+		return -1;
+		
+	}
+	*/
+	//constructor for the Board
+	function Board(size) {
+		this.numMoves = 0;
+		this.boardSize = size;
+		this.squareSize = this.boardSize/3;
+
+		var row1 = [], row2 = [], row3 = [];
+		this.boardArray = [row1,row2,row3];
+
+		for(var x = 0; x < 3; x++) {
+			for(var y = 0; y < 3; y++) {
+				this.boardArray[x][y] = new Square(x*this.squareSize,y*this.squareSize);
+				this.boardArray[x][y].xIndex = x;
+				this.boardArray[x][y].yIndex = y;
+			}
+		}
+		
+		//Should take "X" or "O" as parameter and determine if that player won
+		this.checkWinner = function(symbol) {
+			var win = true;
+
+			for(var x = 0; x < 3; x++) {
+				win = true;
+				for(var y = 0; y < 3; y++) {
+					if(this.boardArray[x][y].value !== symbol) {
+						win = false;
+					}
+				}
+				if(win === true) {
+					return true;
+				}
+			}
+
+			for(var y = 0; y < 3; y++) {
+				win = true;
+				for(var x = 0; x < 3; x++) {
+					if(this.boardArray[x][y].value !== symbol) {
+						win = false;
+					}
+				}
+				if(win === true) {
+					return true;
+				}
+			}
+
+			win = true;
+			for(var diag = 0; diag < 3; diag++) {
+				if(this.boardArray[diag][diag].value !== symbol) {
+					win = false;
+				}
+			}
+			if(win === true) {
+				return true;
+			}
+			win = true;
+			for(var diag = 0; diag < 3; diag++) {
+				if(this.boardArray[diag][2 - diag].value !== symbol) {
+					win = false;
+				}
+			}
+			if(win === true) {
+				return true;
+			}
+			return false;
+		}
+		
+		//Draw the board and fill in tiles that have already been chosen
+		this.paintBoard = function() {
+			var currentSquare;
+		
+			var canv = document.getElementById("boardSpace");
+			canv.setAttribute("width",this.boardSize);
+			canv.setAttribute("height",this.boardSize);
+			
+			var ctx = canv.getContext("2d");
+			
+			//set font size relative to the board
+			var fontSize = (Math.floor(this.boardSize/6)).toString();			
+			ctx.font = fontSize + "px Arial";					
+
+			
+			for(var x = 0; x < 3; x++) {
+				for(var y = 0; y < 3; y++) {
+					currentSquare = this.boardArray[x][y];
+					ctx.strokeRect(currentSquare.x, currentSquare.y,this.squareSize,this.squareSize);
+					if(currentSquare.value !== null) {
+						ctx.fillText(currentSquare.value,currentSquare.x + this.squareSize/3, currentSquare.y + 2*this.squareSize/3);
+					}
+				}
+			}
+			
+		}
+		
+	}
+	
+	//test function to create a board
+	/*
+	function createBoard() {
+		var gameBoard = new Board(200);
+		gameBoard.boardArray[1][2].value = "O";
+		gameBoard.paintBoard();
+	}
+	*/
+	
+	//recurring function with game logic
+	function playGame() {
+		
+		var SIZE = 600;
+		var gameBoard = new Board(SIZE);
+		gameBoard.paintBoard();
+		var p1 = new Player("X", gameBoard);
+		var p2 = new Player("O", gameBoard);
+		p2.move = aiChoice;
+		
+		var currentPlayer = p1;
+		var canv = document.getElementById("boardSpace");
+		
+		//called when a player clicks
+		
+		var takeTurn = function(e){
+			var validMove = -1;
+			if(currentPlayer.sign === "X") {
+				var x, y;
+				x = e.pageX;
+				y = e.pageY;
+
+				var rowVal = x/(SIZE/3);
+				var colVal = y/(SIZE/3);
+
+			
+				var chosenSquare = gameBoard.boardArray[Math.floor(rowVal)][Math.floor(colVal)];
+				validMove = currentPlayer.markSquare(chosenSquare);
+			} else {
+				validMove = p2.move(gameBoard.numMoves,p1);
+			}
+			
+			gameBoard.paintBoard();
+			if(validMove === 1) {
+				gameBoard.numMoves++;
+				var win = gameBoard.checkWinner(currentPlayer.sign);
+				var reset = false;
+				if(win) {
+					alert(currentPlayer.sign + " wins!!!");;
+					reset = true;
+				}
+				if(gameBoard.numMoves >= 9 && win === false) {
+					alert("Tie!");
+					reset = true;
+				}
+				if(reset === true) {
+					gameBoard.numMoves = 0;
+					for(var x = 0; x < 3; x++) {
+						for(var y = 0; y < 3; y++) {
+							gameBoard.boardArray[x][y].value = null;
+						}
+					}
+					gameBoard.paintBoard();
+					currentPlayer = p2; //this will switch in the block below
+				}
+				
+				if(currentPlayer.sign === "X") {
+					currentPlayer = p2;
+				} else {
+					currentPlayer = p1;
+				}
+				if(currentPlayer.sign === "O") {
+					takeTurn();
+				}			
+			}
+		};
+		
+		canv.addEventListener("click",takeTurn,false);
+		
+		var ctx = canv.getContext("2d");
+		
+	}
+
+				
+	
+	
+	</script>
+</head>
+<body onLoad = "playGame();">
+	<canvas id="boardSpace">Please use a browser that supports the canvas element!</canvas>
+</body>
+</html>
