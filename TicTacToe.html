@@ -32,12 +32,13 @@
 		
 		//minimax function
 		// returns - 2 for impossible move; -1 for losing; 0 for tie; 1 for win
-		//passes a square, the number of moves, and a copy of the board.
+		//passes a square, the number of moves, the opponent, and a copy of the board.
 		this.valueOfChoice = function(square, moveCount, opponent,currentBoard) {
-			//impossible moves
+			//tie
 			if(moveCount >= 9) {
 				return 0;
 			}
+			//impossible move
 			if(square.value !== null) {
 				return -2;
 			}
